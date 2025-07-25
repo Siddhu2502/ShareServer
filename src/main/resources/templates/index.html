@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Sharing</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        .container { max-width: 500px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; }
+        input[type="text"] { padding: 10px; width: 200px; }
+        button { padding: 10px 20px; }
+        .public-link { margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Welcome to FileShare</h1>
+        <p>Enter a code to access private files or browse the public directory.</p>
+
+        <hr>
+
+        <h2>Private Access</h2>
+        <form action="/access-private" method="post">
+            <input type="text" name="code" placeholder="Enter access code" required>
+            <button type="submit">Access Files</button>
+        </form>
+
+        <div th:if="${error}" style="color: red; margin-bottom: 10px;">
+            <p th:text="${error}"></p>
+        </div>
+
+        <div class="public-link">
+            <a href="/public">Browse Public Files</a>
+        </div>
+    </div>
+
+</body>
+</html>

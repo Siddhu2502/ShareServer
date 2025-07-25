@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Private Files</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 20px; 
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: auto; 
+            padding: 20px; 
+        }
+        .breadcrumb {
+            padding: 10px 0;
+            margin-bottom: 15px;
+        }
+        .breadcrumb a, .breadcrumb button {
+            color: #007bff;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .breadcrumb a:hover, .breadcrumb button:hover {
+            text-decoration: underline;
+        }
+        .actions {
+            margin-bottom: 20px;
+            padding: 10px 0;
+        }
+        .btn {
+            color: #007bff;
+            padding: 8px 15px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            cursor: pointer;
+            margin-right: 10px;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #f8f9fa;
+            text-decoration: none;
+        }
+        .file-list {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .file-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .folder-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .folder-link:hover {
+            text-decoration: underline;
+        }
+        .download-btn {
+            color: #007bff;
+            padding: 5px 10px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background: white;
+            font-size: 12px;
+        }
+        .download-btn:hover {
+            background-color: #f8f9fa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Private Files</h1>
+        
+        <!-- Navigation -->
+        <div class="breadcrumb" th:if="${currentPath != null && !currentPath.isEmpty()}">
+            📍 Location: 
+            <form th:action="@{/access-private}" method="post" style="display: inline;">
+                <input type="hidden" name="code" th:value="${folderCode}">
+                <button type="submit">Root</button>
+            </form>
+            <span th:if="${currentPath != null && !currentPath.isEmpty()}" th:text="' / ' + ${currentPath}"></span>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <a th:href="@{/download-folder/{code}(code=${folderCode}, subPath=${currentPath})}" 
+               class="btn">
+                📦 Download This Folder
+            </a>
+            
+            <form th:if="${parentPath != null}" th:action="@{/access-private}" method="post" style="display: inline;">
+                <input type="hidden" name="code" th:value="${folderCode}">
+                <input type="hidden" name="subPath" th:value="${parentPath}">
+                <button type="submit" class="btn">⬆️ Back to Parent</button>
+            </form>
+        </div>
+
+        <!-- Files -->
+        <div th:if="${files.isEmpty()}">
+            <p style="text-align: center; color: #666; padding: 30px;">📂 This folder is empty.</p>
+        </div>
+
+        <div class="file-list" th:unless="${files.isEmpty()}">
+            <div th:each="file : ${files}" class="file-item">
+                <div>
+                    <!-- Folders -->
+                    <span th:if="${file.startsWith('FOLDER:')}">
+                        📁 
+                        <a th:href="@{/browse/{code}(code=${folderCode}, folder=${currentPath != null && !currentPath.isEmpty() ? currentPath + '/' + file.substring(7) : file.substring(7)})}" 
+                           class="folder-link" th:text="${file.substring(7)}"></a>
+                    </span>
+                    
+                    <!-- Files -->
+                    <span th:unless="${file.startsWith('FOLDER:')}">
+                        📄 <span th:text="${file}"></span>
+                    </span>
+                </div>
+                
+                <div>
+                    <!-- Download buttons -->
+                    <a th:if="${file.startsWith('FOLDER:')}" 
+                       th:href="@{/download-folder/{code}(code=${folderCode}, subPath=${currentPath != null && !currentPath.isEmpty() ? currentPath + '/' + file.substring(7) : file.substring(7)})}" 
+                       class="download-btn">ZIP</a>
+                    
+                    <a th:unless="${file.startsWith('FOLDER:')}" 
+                       th:href="@{/download/private/{code}/{filename}(code=${folderCode}, filename=${file}, subPath=${currentPath})}" 
+                       class="download-btn">Download</a>
+                </div>
+            </div>
+        </div>
+
+        <a href="/" class="btn" style="margin-top: 20px;">🏠 Back to Home</a>
+    </div>
+</body>
+</html>
