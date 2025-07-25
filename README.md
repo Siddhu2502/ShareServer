@@ -71,15 +71,5 @@ It's literally just `git clone` and `mvn spring-boot:run` for development - no n
 
 ## 🎬 See it in action!
 
-**Normal folder browsing:**
-<video width="600" controls>
-  <source src="video/first1.webm" type="video/webm">
-  Your browser does not support the video tag.
-</video>
-
-**Private folder access protection:**
-<video width="600" controls>
-  <source src="video/first2.webm" type="video/webm">
-  Your browser does not support the video tag.
-</video>
-
+![normal navigation](video/first1.gif)
+![wrong navigation](video/first2.gif)
