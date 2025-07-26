@@ -1,6 +1,4 @@
-package com.server.filesharing.Controller;
-
-import com.server.filesharing.Service.FileService;
+package com.server.filesharing.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -10,6 +8,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.server.filesharing.service.FileService;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 
@@ -19,6 +20,12 @@ import java.util.List;
 public class FileController {
 
     private final FileService fileService;
+
+    private static final String FILES = "files";
+    private static final String CURRENT_PATH = "currentPath";
+    private static final String PARENT_PATH = "parentPath";
+    private static final String FOLDER_CODE = "folderCode";
+
 
     // Use constructor injection to get the FileService instance
     public FileController(FileService fileService) {
@@ -37,9 +44,9 @@ public class FileController {
         String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
         List<String> fileList = fileService.getPublicFiles(cleanSubPath);
         
-        model.addAttribute("files", fileList);
-        model.addAttribute("currentPath", cleanSubPath != null ? cleanSubPath : "");
-        model.addAttribute("parentPath", getParentPath(cleanSubPath));
+        model.addAttribute(FILES, fileList);
+        model.addAttribute(CURRENT_PATH, cleanSubPath != null ? cleanSubPath : "");
+        model.addAttribute(PARENT_PATH, getParentPath(cleanSubPath));
         
         return "public-files";
     }
@@ -50,9 +57,9 @@ public class FileController {
         String cleanFolder = folder.replace("?", "");
         List<String> fileList = fileService.getPublicFiles(cleanFolder);
         
-        model.addAttribute("files", fileList);
-        model.addAttribute("currentPath", cleanFolder);
-        model.addAttribute("parentPath", getParentPath(cleanFolder));
+        model.addAttribute(FILES, fileList);
+        model.addAttribute(CURRENT_PATH, cleanFolder);
+        model.addAttribute(PARENT_PATH, getParentPath(cleanFolder));
         return "public-files";
     }
 
@@ -88,10 +95,10 @@ public class FileController {
         }
 
         // If the code was valid, show the private files page
-        model.addAttribute("files", fileList);
-        model.addAttribute("folderCode", code);
-        model.addAttribute("currentPath", cleanSubPath != null ? cleanSubPath : "");
-        model.addAttribute("parentPath", getParentPath(cleanSubPath));
+        model.addAttribute(FILES, fileList);
+        model.addAttribute(FOLDER_CODE, code);
+        model.addAttribute(CURRENT_PATH, cleanSubPath != null ? cleanSubPath : "");
+        model.addAttribute(PARENT_PATH, getParentPath(cleanSubPath));
         return "private-files";
     }
 
@@ -107,10 +114,10 @@ public class FileController {
             return "redirect:/";
         }
 
-        model.addAttribute("files", fileList);
-        model.addAttribute("folderCode", code);
-        model.addAttribute("currentPath", cleanFolder);
-        model.addAttribute("parentPath", getParentPath(cleanFolder));
+        model.addAttribute(FILES, fileList);
+        model.addAttribute(FOLDER_CODE, code);
+        model.addAttribute(CURRENT_PATH, cleanFolder);
+        model.addAttribute(PARENT_PATH, getParentPath(cleanFolder));
         return "private-files";
     }
 

@@ -1,4 +1,4 @@
-package com.server.filesharing.Service;
+package com.server.filesharing.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.UrlResource;
@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.springframework.core.io.Resource;
@@ -43,7 +42,7 @@ public class FileService {
                             // Add a prefix to distinguish folders from files
                             return Files.isDirectory(p) ? "FOLDER:" + fileName : fileName;
                         })
-                        .collect(Collectors.toList());
+                        .toList();
             }
         } catch (IOException e) {
             // If the directory doesn't exist or there's an error, return an empty list
@@ -77,7 +76,7 @@ public class FileService {
                             // Add a prefix to distinguish folders from files
                             return Files.isDirectory(p) ? "FOLDER:" + fileName : fileName;
                         })
-                        .collect(Collectors.toList());
+                        .toList();
             }
         } catch (IOException e) {
             System.err.println("Error reading the path/ folder/ file does not exist: " + e.getMessage());

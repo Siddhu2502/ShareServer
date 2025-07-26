@@ -2,6 +2,8 @@
 
 A super lightweight file sharing server that's only **20MB** and packs a punch! Share files like a boss with password protection and nested folder support. No bloat, no nonsense - just pure file sharing goodness! 
 
+<a href="https://www.producthunt.com/products/github-148?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-shareserver&#0045;20mb&#0045;file&#0045;sharing&#0045;service" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=997573&theme=light&t=1753510662054" alt="ShareServer&#0032;&#0040;20MB&#0032;File&#0032;Sharing&#0032;service&#0041; - a&#0032;super&#0032;lightweight&#0032;file&#0032;sharing&#0032;server&#0032;that&#0039;s&#0032;only&#0032;20MB | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
 ## What can this bad boy do? 🔥
 
 ### 🔒 Private Files (The Secret Sauce!)
