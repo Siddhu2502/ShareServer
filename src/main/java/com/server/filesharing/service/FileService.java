@@ -20,7 +20,7 @@ import org.springframework.core.io.ByteArrayResource;
 @Service
 public class FileService {
 
-    // Injects the path from your application.properties file
+    // Inject the path from your application.properties file
     @Value("${files.base-path.public}")
     private String publicPath;
 
@@ -28,14 +28,55 @@ public class FileService {
         return getPublicFiles(null);
     }
 
+
+    // Helper method to get the parent path from a subPath
+    private String sanitizePath(String subPath){
+        if (subPath == null || subPath.isEmpty()) {
+            return "";
+        }
+        // Remove any leading or trailing slashes and replace spaces with underscores
+        String sanitizedString  = subPath.replace("\\.\\.", "")
+                                         .replace("//+", "/")
+                                         .replace(" ", "_")
+                                         .replace("^/+", "")
+                                         .replace("/+$", "");
+
+        if (sanitizedString.isEmpty() || sanitizedString.matches("^[./\\\\]*$")) {
+            return null;
+        }
+        return sanitizedString;
+    }
+
+    private boolean isSafePath(Path basePath, Path targetPath) {
+        try {
+            return targetPath.toRealPath().startsWith(basePath.toRealPath());
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public List<String> getPublicFiles(String subPath) {
         try {
-            Path basePath = Paths.get(publicPath);
-            Path targetPath = (subPath != null && !subPath.isEmpty()) ? 
-                basePath.resolve(subPath) : basePath;
+            Path basePath = Paths.get(publicPath).toRealPath();
+
+            String sanitizedSubPath = sanitizePath(subPath);
+
+            Path targetPath;
+            
+            if (sanitizedSubPath != null && !sanitizedSubPath.isEmpty()){
+                targetPath = basePath.resolve(sanitizedSubPath).toRealPath();
+
+                if (!isSafePath(basePath, targetPath)){
+                    System.err.println("Attempted access to unsafe path: " + sanitizedSubPath);
+                    return Collections.emptyList();
+                }
+            }
+            else { targetPath = basePath; }
             
             // Read the directory and get a list of file names
             try (var stream = Files.list(targetPath)) {
+
+                // returns the list in format FOLDER:folder1 etc 
                 return stream
                         .map(p -> {
                             String fileName = p.getFileName().toString();
@@ -61,13 +102,27 @@ public class FileService {
         String folderName = privateCodes.get(code);
 
         if (folderName == null) {
-            return null;
+            return Collections.emptyList();
         }
 
         try {
             Path basePath = Paths.get(privatePath, folderName);
-            Path targetPath = (subPath != null && !subPath.isEmpty()) ? 
-                basePath.resolve(subPath) : basePath;
+
+            String sanitizedSubPath = sanitizePath(subPath);
+
+
+            Path targetPath;
+
+            if (sanitizedSubPath != null && !sanitizedSubPath.isEmpty()) {
+                targetPath = basePath.resolve(sanitizedSubPath).toRealPath();
+
+                if (!isSafePath(basePath, targetPath)) {
+                    System.err.println("Attempted access to unsafe path: " + sanitizedSubPath);
+                    return Collections.emptyList();
+                }
+            } else {
+                targetPath = basePath.toRealPath();
+            }
             
             try (var stream = Files.list(targetPath)) {
                 return stream
