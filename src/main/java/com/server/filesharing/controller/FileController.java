@@ -1,5 +1,10 @@
 package com.server.filesharing.controller;
 
+import com.server.filesharing.service.PrivateFileService;
+import com.server.filesharing.service.PublicFileService;
+import com.server.filesharing.service.ResourceService;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,27 +14,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.server.filesharing.service.FileService;
-
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-
 import java.util.List;
 
 @Controller
 public class FileController {
 
-    private final FileService fileService;
+    private final PublicFileService publicFileService;
+    private final PrivateFileService privateFileService;
+    private final ResourceService resourceService;
 
     private static final String FILES = "files";
     private static final String CURRENT_PATH = "currentPath";
     private static final String PARENT_PATH = "parentPath";
     private static final String FOLDER_CODE = "folderCode";
 
-
-    // Use constructor injection to get the FileService instance
-    public FileController(FileService fileService) {
-        this.fileService = fileService;
+    public FileController(PublicFileService publicFileService, PrivateFileService privateFileService, ResourceService resourceService) {
+        this.publicFileService = publicFileService;
+        this.privateFileService = privateFileService;
+        this.resourceService = resourceService;
     }
 
     @GetMapping("/")
@@ -37,26 +39,23 @@ public class FileController {
         return "index";
     }
 
-    // Public files handling
     @GetMapping("/public")
     public String listPublicFiles(@RequestParam(required = false) String subPath, Model model) {
-        // Clean the subPath parameter to remove any URL encoding issues
         String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
-        List<String> fileList = fileService.getPublicFiles(cleanSubPath);
-        
+        List<String> fileList = publicFileService.getPublicFiles(cleanSubPath);
+
         model.addAttribute(FILES, fileList);
         model.addAttribute(CURRENT_PATH, cleanSubPath != null ? cleanSubPath : "");
         model.addAttribute(PARENT_PATH, getParentPath(cleanSubPath));
-        
+
         return "public-files";
     }
 
     @GetMapping("/browse-public")
     public String browsePublicSubfolder(@RequestParam String folder, Model model) {
-        // Clean the folder parameter to remove any URL encoding issues
         String cleanFolder = folder.replace("?", "");
-        List<String> fileList = fileService.getPublicFiles(cleanFolder);
-        
+        List<String> fileList = publicFileService.getPublicFiles(cleanFolder);
+
         model.addAttribute(FILES, fileList);
         model.addAttribute(CURRENT_PATH, cleanFolder);
         model.addAttribute(PARENT_PATH, getParentPath(cleanFolder));
@@ -67,7 +66,7 @@ public class FileController {
     public ResponseEntity<Resource> downloadPublicFolder(@RequestParam(required = false) String subPath) {
         try {
             String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
-            Resource resource = fileService.createPublicFolderZip(cleanSubPath);
+            Resource resource = publicFileService.createPublicFolderZip(cleanSubPath);
             String headerValue = "attachment; filename=\"" + resource.getFilename() + "\"";
 
             return ResponseEntity.ok()
@@ -79,22 +78,18 @@ public class FileController {
         }
     }
 
-    // Private files handling
     @PostMapping("/access-private")
-    public String accessPrivateFiles(@RequestParam String code, 
+    public String accessPrivateFiles(@RequestParam String code,
                                      @RequestParam(required = false) String subPath,
                                      Model model, RedirectAttributes redirectAttributes) {
-        // Clean the subPath parameter to remove any URL encoding issues
         String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
-        List<String> fileList = fileService.getPrivateFiles(code, cleanSubPath);
+        List<String> fileList = privateFileService.getPrivateFiles(code, cleanSubPath);
 
-        // If the service returns null, the code was invalid
-        if (fileList == null) {
-            redirectAttributes.addFlashAttribute("error", "Invalid Access Code");
-            return "redirect:/"; // Redirect back to the homepage
+        if (fileList == null || fileList.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Invalid Access Code or folder is empty");
+            return "redirect:/";
         }
 
-        // If the code was valid, show the private files page
         model.addAttribute(FILES, fileList);
         model.addAttribute(FOLDER_CODE, code);
         model.addAttribute(CURRENT_PATH, cleanSubPath != null ? cleanSubPath : "");
@@ -106,10 +101,9 @@ public class FileController {
     public String browseSubfolder(@PathVariable String code,
                                   @RequestParam String folder,
                                   Model model) {
-        // Clean the folder parameter to remove any URL encoding issues
         String cleanFolder = folder.replace("?", "");
-        List<String> fileList = fileService.getPrivateFiles(code, cleanFolder);
-        
+        List<String> fileList = privateFileService.getPrivateFiles(code, cleanFolder);
+
         if (fileList == null) {
             return "redirect:/";
         }
@@ -121,7 +115,6 @@ public class FileController {
         return "private-files";
     }
 
-    // Download methods
     @GetMapping("/download/{type}/{identifier}/{filename}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String type,
                                                  @PathVariable String identifier,
@@ -129,7 +122,7 @@ public class FileController {
                                                  @RequestParam(required = false) String subPath) {
         try {
             String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
-            Resource resource = fileService.loadFileAsResource(type, identifier, filename, cleanSubPath);
+            Resource resource = resourceService.loadFileAsResource(type, identifier, filename, cleanSubPath);
             String headerValue = "attachment; filename=\"" + resource.getFilename() + "\"";
 
             return ResponseEntity.ok()
@@ -145,7 +138,7 @@ public class FileController {
                                                    @RequestParam(required = false) String subPath) {
         try {
             String cleanSubPath = (subPath != null) ? subPath.replace("?", "") : null;
-            Resource resource = fileService.createFolderZip(code, cleanSubPath);
+            Resource resource = privateFileService.createFolderZip(code, cleanSubPath);
             String headerValue = "attachment; filename=\"" + resource.getFilename() + "\"";
 
             return ResponseEntity.ok()
@@ -157,7 +150,6 @@ public class FileController {
         }
     }
 
-    // Helper method
     private String getParentPath(String currentPath) {
         if (currentPath == null || currentPath.isEmpty()) {
             return null;
